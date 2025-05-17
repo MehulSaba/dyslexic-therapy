@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Dyslexia Therapy Assistant</title>
+    <style>
+        /* Increased Sizes */
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+            --primary-color: #4CAF50;
+            --error-color: #f44336;
+            --number-size: clamp(3rem, 10vw, 5rem); /* Larger base size */
+            --control-size: 1.25rem;
+        }
+
+        body {
+            font-size: 1.1rem; /* Base font size increased */
+        }
+
+        .character-display {
+            font-size: var(--number-size);
+            padding: 2rem; /* More padding */
+            margin: 2rem 0;
+            border-width: 4px; /* Thicker border */
+        }
+
+        .controls {
+            gap: 1.5rem; /* Larger gaps between controls */
+            margin: 3rem 0;
+        }
+
+        input {
+            font-size: 1.75rem; /* Larger input text */
+            padding: 1rem;
+            max-width: 400px; /* Wider input field */
+        }
+
+        .control-btn {
+            padding: 1rem 2rem; /* Bigger buttons */
+            font-size: 1.25rem;
+            border-width: 3px;
+        }
+
+        .control-panel {
+            gap: 1.5rem; /* More spacing between controls */
+            margin: 2rem 0;
+        }
+
+        .feedback {
+            font-size: clamp(1.2rem, 5vw, 1.5rem); /* Larger feedback */
+            margin: 2rem 0;
+        }
+
+        .stats {
+            font-size: 1.3rem; /* Larger stats text */
+            margin: 2rem 0;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 6vw, 3rem); /* Larger heading */
+            margin-bottom: 2rem;
+        }
+
+        /* Adjust tracking line */
+        .tracking-line {
+            height: 6px; /* Thicker tracking line */
+            bottom: -15px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 3rem; /* More padding on larger screens */
+            }
+            
+            .control-btn {
+                padding: 1.2rem 2.5rem;
+                font-size: 1.4rem;
+            }
+            
+            input {
+                font-size: 2rem;
+                max-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Same HTML structure as before -->
+    <div class="container">
+        <h1>Dyslexia Character Therapy</h1>
+        
+        <div class="control-panel">
+            <button class="control-btn" onclick="toggleFont()">Change Font</button>
+            <button class="control-btn" onclick="toggleMode('therapy')">Therapy Mode</button>
+            <button class="control-btn" onclick="toggleMode('color')">Color Overlay</button>
+            <button class="control-btn" onclick="toggleMode('mirror')">Mirror Mode</button>
+        </div>
+
+        <div class="character-display" id="characterDisplay">
+            <div class="tracking-line"></div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="userInput" placeholder="Enter what you see" autocomplete="off">
+            <button class="control-btn" onclick="checkAnswer()">Check</button>
+            <button class="control-btn" onclick="newProblem()">New Challenge</button>
+        </div>
+
+        <div class="feedback" id="feedback" role="alert"></div>
+        <div class="stats">
+            <p>Score: <span id="score">0</span></p>
+            <p>Streak: <span id="streak">0</span></p>
+        </div>
+    </div>
+
+    <!-- Same JavaScript as before -->
+
+    <script>
+        // Dyslexia Configuration
+        const confusingPairs = [
+            ['6', '9'], ['3', '8'], ['1', '7'], ['2', '5'], ['0', 'O'],
+            ['b', 'd'], ['p', 'q'], ['m', 'n'], ['s', 'z'], ['a', 'e']
+        ];
+
+        const fonts = ['font-lexend', 'font-opendyslexic', 'font-dyslexiastandard'];
+        let currentFontIndex = 0;
+        let activeModes = { therapy: false, color: false, mirror: false };
+        let currentCharacters = [];
+        let score = 0;
+        let streak = 0;
+
+        function generateChallenge() {
+            const display = document.getElementById('characterDisplay');
+            const pair = confusingPairs[Math.floor(Math.random() * confusingPairs.length)];
+            currentCharacters = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+            
+            display.innerHTML = currentCharacters
+                .map(c => `<span class="confusing-pair">${c}</span>`)
+                .join(' ') + '<div class="tracking-line"></div>';
+            
+            applyActiveModes();
+        }
+
+        function toggleFont() {
+            currentFontIndex = (currentFontIndex + 1) % fonts.length;
+            document.body.className = fonts[currentFontIndex];
+        }
+
+        function toggleMode(mode) {
+            const btn = event.target;
+            activeModes[mode] = !activeModes[mode];
+            btn.classList.toggle('active');
+            applyActiveModes();
+        }
+
+        function applyActiveModes() {
+            const display = document.getElementById('characterDisplay');
+            
+            display.classList.toggle('therapy-mode', activeModes.therapy);
+            display.classList.toggle('color-overlay', activeModes.color);
+            display.classList.toggle('mirror-mode', activeModes.mirror);
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('userInput').value
+                .replace(/ /g, '').toLowerCase();
+            const correctAnswer = currentCharacters.join('').toLowerCase();
+            
+            if(userAnswer === correctAnswer) {
+                score++;
+                streak++;
+                showFeedback('Correct! Well done!', 'correct');
+            } else {
+                streak = 0;
+                showFeedback(`Incorrect. Correct answer: ${currentCharacters.join(' ')}`, 'incorrect');
+            }
+            
+            updateStats();
+            setTimeout(newProblem, 1500);
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+        }
+
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+
+        function newProblem() {
+            generateChallenge();
+            document.getElementById('userInput').value = '';
+            document.getElementById('userInput').focus();
+        }
+
+        // Initialize
+        generateChallenge();
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', () => btn.blur());
+        });
+    </script>
+</body>
+</html>
